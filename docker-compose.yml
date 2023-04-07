@@ -1,0 +1,204 @@
+version: '3.8'
+
+services: 
+  overseerr:
+    image: sctx/overseerr:latest
+    container_name: overseerr
+    restart: unless-stopped
+    environment:
+      TZ: ${TIMEZONE}
+      PUID: ${USER_ID}
+      PGID: ${GROUP_ID}
+    volumes:
+      - ./configs/overseerr:/app/config
+    ports:
+        - 5055:5055/tcp
+    depends_on:
+      - plex
+    networks:
+      - plex-auto
+      - swag
+
+  radarr:
+    image: lscr.io/linuxserver/radarr:latest
+    container_name: radarr
+    restart: unless-stopped
+    environment:
+      TZ: ${TIMEZONE}
+      PUID: ${USER_ID}
+      PGID: ${GROUP_ID}
+    volumes:
+      - ./configs/radarr:/config
+      - ./medias/movies:/movies
+      - ./download:/download
+    ports:
+      - 7878:7878
+    depends_on:
+      - deluge
+      - prowlarr
+    networks:
+      - plex-auto
+      - swag
+  
+  sonarr:
+    image: lscr.io/linuxserver/sonarr:latest
+    container_name: sonarr
+    restart: unless-stopped
+    environment:
+      TZ: ${TIMEZONE}
+      PUID: ${USER_ID}
+      PGID: ${GROUP_ID}
+    volumes:
+      - ./configs/sonarr:/config
+      - ./medias/series:/series
+      - ./medias/animes:/animes
+      - ./download:/download
+    ports:
+      - 8989:8989
+    depends_on:
+      - deluge
+      - prowlarr
+    networks:
+      - plex-auto
+      - swag
+  
+  bazarr:
+    image: lscr.io/linuxserver/bazarr:latest
+    container_name: bazarr
+    restart: unless-stopped
+    environment:
+      TZ: ${TIMEZONE}
+      PUID: ${USER_ID}
+      PGID: ${GROUP_ID}
+    volumes:
+      - ./configs/bazarr:/config
+      - ./medias/series:/series
+      - ./medias/animes:/animes
+      - ./medias/movies:/movies
+    ports:
+      - 6767:6767
+    depends_on:
+      - sonarr
+      - radarr
+    networks:
+      - plex-auto
+      - swag
+      
+
+  deluge:
+    image: timdev0/docker-deluge-openvpn:master
+    container_name: deluge
+    restart: unless-stopped
+    environment:
+      TZ: ${TIMEZONE}
+      PUID: ${USER_ID}
+      PGID: ${GROUP_ID}
+      OPENVPN_PROVIDER: PIA
+      OPENVPN_CONFIG: switzerland
+      OPENVPN_USERNAME: ${VPN_USER}
+      OPENVPN_PASSWORD: ${VPN_PASS}
+      LOCAL_NETWORK: 192.168.0.0/16
+      DELUGE_INCOMPLETE_DIR: /download # or /dowload/incomplete
+      DELUGE_MOVE_COMPLETED: false
+      #DELUGE_DOWNLOAD_DIR: /download/completed #optional put DELUGE_MOVE_COMPLETED to true
+      DELUGE_COPY_TORRENT: false
+      # DELUGE_TORRENT_DIR: /download/torrents #optional put COPY_TORRENT_FILE to true
+      # DELUGE_WATCH_DIR: /download/watch #optional
+      # DELUGE_WEB_PORT: 8112 #optinal
+      # DELUGE_DEAMON_PORT: 58846 #optional
+      DELUGE_LABEL_NAME_RADARR: radarr  
+      DELUGE_LABEL_NAME_SONARR: tv-sonarr
+    cap_add:
+      - NET_ADMIN
+    sysctls:
+     - net.ipv6.conf.all.disable_ipv6=1
+    volumes:
+      - ./configs/deluge:/config
+      - ./download:/download
+      - ./medias/series:/series
+      - ./medias/animes:/animes
+      - ./medias/movies:/movies
+    ports:
+      - 8112:8112
+      - 6881:6881
+      - 6881:6881/udp
+    networks:
+      - plex-auto
+      - swag
+
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:develop
+    container_name: prowlarr
+    restart: unless-stopped
+    environment:
+      TZ: ${TIMEZONE}
+      PUID: ${USER_ID}
+      PGID: ${GROUP_ID}
+    volumes:
+      - ./configs/prowlarr:/config
+    ports:
+      - 9696:9696
+    depends_on:
+      - flaresolverr
+    networks:
+      - plex-auto
+      - swag
+
+  flaresolverr:
+    image: flaresolverr/flaresolverr:latest
+    container_name: flaresolverr
+    environment:
+      LOG_LEVEL: info
+      LOG_HTML: false
+      CAPTCHA_SOLVER: none
+      TZ: ${TIMEZONE}
+    ports:
+      - 8191:8191
+    restart: unless-stopped
+    networks:
+      - plex-auto
+
+  plex:
+    image: lscr.io/linuxserver/plex:latest
+    container_name: plex
+    restart: unless-stopped
+    #network_mode: host # work only on linux
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]
+    environment:
+      PUID: ${USER_ID}
+      PGID: ${GROUP_ID}
+      NVIDIA_VISIBLE_DEVICES: all
+      NVIDIA_DRIVER_CAPABILITIES: compute,video,utility
+      VERSION: docker
+    volumes:
+      - ./configs/plex:/config
+      - ./medias/series:/series
+      - ./medias/animes:/animes
+      - ./medias/movies:/movies
+    ports:
+      - 32400:32400
+      - 1900:1900/udp
+      - 3005:3005
+      - 5352:5353/udp # 5353 used by _mdnsresponder on MAC
+      - 8324:8324
+      - 32410:32410/udp
+      - 32412:32412/udp
+      - 32413:32413/udp
+      - 32414:32414/udp
+      - 32469:32469
+    networks:
+      - plex-auto
+      - swag
+
+networks:
+  plex-auto:
+    name: plex-auto
+    driver: bridge
+  swag:
+    external: true
+    name: swag
+    driver: bridge
