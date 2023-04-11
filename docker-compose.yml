@@ -2,6 +2,7 @@ version: '3.8'
 
 services: 
   overseerr:
+    platform: linux/x86_64
     image: sctx/overseerr:latest
     container_name: overseerr
     restart: unless-stopped
@@ -20,6 +21,7 @@ services:
       - swag
 
   radarr:
+    platform: linux/x86_64
     image: lscr.io/linuxserver/radarr:latest
     container_name: radarr
     restart: unless-stopped
@@ -29,8 +31,8 @@ services:
       PGID: ${GROUP_ID}
     volumes:
       - /home/pi/services-configs/plex-auto/radarr:/config
-      - /media/hdd01/movies:/movies
-      - /media/hdd01/download:/download
+      - /media/sda1/movies:/movies
+      - /media/sda1/download:/download
     ports:
       - 7878:7878
     depends_on:
@@ -41,6 +43,7 @@ services:
       - swag
   
   sonarr:
+    platform: linux/x86_64
     image: lscr.io/linuxserver/sonarr:latest
     container_name: sonarr
     restart: unless-stopped
@@ -49,7 +52,7 @@ services:
       PUID: ${USER_ID}
       PGID: ${GROUP_ID}
     volumes:
-      - /home/tim/services-configs/plex-auto/sonarr:/config/sonarr
+      - /home/pi/services-configs/plex-auto/sonarr:/config/sonarr
       - /media/hdd01/series:/series
       - /media/hdd01/animes:/animes
       - /media/hdd01/download:/download
@@ -63,6 +66,7 @@ services:
       - swag
   
   bazarr:
+    platform: linux/x86_64
     image: lscr.io/linuxserver/bazarr:latest
     container_name: bazarr
     restart: unless-stopped
@@ -72,9 +76,9 @@ services:
       PGID: ${GROUP_ID}
     volumes:
       - /home/pi/services-configs/plex-auto/bazarr:/config
-      - /media/hdd01/series:/series
-      - /media/hdd01/animes:/animes
-      - /media/hdd01/movies:/movies
+      - /media/sda1/series:/series
+      - /media/sda1/animes:/animes
+      - /media/sda1/movies:/movies
     ports:
       - 6767:6767
     depends_on:
@@ -85,6 +89,7 @@ services:
       - swag
 
   deluge:
+    platform: linux/x86_64
     image: timdev0/docker-deluge-openvpn:latest
     container_name: deluge
     restart: unless-stopped
@@ -111,14 +116,14 @@ services:
      - net.ipv6.conf.all.disable_ipv6=1
     volumes:
       - /home/tim/services-configs/plex-auto/deluge:/config
-      - /media/hdd01/download:/download
+      - /media/sda1/download:/download
 
-      - /media/hdd01/concerts:/concerts
-      - /media/hdd01/documentaires:/documentaires
-      - /media/hdd01/movies:/movies
-      - /media/hdd01/series:/series
-      - /media/hdd01/animes:/animes
-      - /media/hdd01/musics:/musics
+      - /media/sda1/concerts:/concerts
+      - /media/sda1/documentaires:/documentaires
+      - /media/sda1/movies:/movies
+      - /media/sda1/series:/series
+      - /media/sda1/animes:/animes
+      - /media/sda1/musics:/musics
     ports:
       - 8112:8112
       - 6881:6881
@@ -128,6 +133,7 @@ services:
       - swag
 
   prowlarr:
+    platform: linux/x86_64
     image: lscr.io/linuxserver/prowlarr:develop
     container_name: prowlarr
     restart: unless-stopped
@@ -136,7 +142,7 @@ services:
       PUID: ${USER_ID}
       PGID: ${GROUP_ID}
     volumes:
-      - /home/tim/services-configs/plex-auto/prowlarr:/config
+      - /home/pi/services-configs/plex-auto/prowlarr:/config
     ports:
       - 9696:9696
     depends_on:
@@ -147,6 +153,7 @@ services:
 
 
   flaresolverr:
+    platform: linux/x86_64
     image: flaresolverr/flaresolverr:latest
     container_name: flaresolverr
     environment:
@@ -161,6 +168,7 @@ services:
       - plex-auto
 
   plex:
+    platform: linux/x86_64
     image: lscr.io/linuxserver/plex:latest
     container_name: plex
     restart: unless-stopped
@@ -171,12 +179,12 @@ services:
       VERSION: docker
     volumes:
       - /home/tim/services-configs/plex-auto/plex:/config
-      - /media/hdd01/concerts:/concerts
-      - /media/hdd01/documentaires:/documentaires
-      - /media/hdd01/movies:/movies
-      - /media/hdd01/series:/series
-      - /media/hdd01/animes:/animes
-      - /media/hdd01/musics:/musics
+      - /media/sda1/concerts:/concerts
+      - /media/sda1/documentaires:/documentaires
+      - /media/sda1/movies:/movies
+      - /media/sda1/series:/series
+      - /media/sda1/animes:/animes
+      - /media/sda1/musics:/musics
     #ports:
       #- 32400:32400
       #- 1900:1900/udp
